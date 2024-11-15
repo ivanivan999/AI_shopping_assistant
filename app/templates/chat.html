@@ -1,0 +1,118 @@
+<!-- app/templates/chat.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div id="chat-messages" class="border p-3 mb-3" style="height: 600px; overflow-y: auto;">
+            </div>
+            <div class="input-group">
+                <input type="text" id="user-input" class="form-control" placeholder="Type your message...">
+                <button id="send-button" class="btn btn-primary" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addMessageToChat(role, content) {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role} p-2 mb-2 rounded`;
+    
+    if (role === 'user') {
+        messageDiv.classList.add('text-white', 'bg-primary', 'ml-auto');
+        messageDiv.style.maxWidth = '75%';
+        messageDiv.style.marginLeft = 'auto';
+    } else {
+        messageDiv.classList.add('bg-light');
+        messageDiv.style.maxWidth = '75%';
+    }
+    
+    messageDiv.textContent = content;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function sendMessage() {
+    const input = document.getElementById('user-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    const sendButton = document.getElementById('send-button');
+    input.disabled = true;
+    sendButton.disabled = true;
+
+    addMessageToChat('user', message);
+    input.value = '';
+
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: message,
+            user_id: 'USER001'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (Array.isArray(data.messages)) {
+                data.messages.forEach(msg => {
+                    if (msg.role === 'tool') {
+                        try {
+                            const parsed = JSON.parse(msg.content);
+                            const formatted = formatToolResponse(parsed);
+                            addMessageToChat('assistant', formatted);
+                        } catch (e) {
+                            console.log('Tool message parse error:', e);
+                        }
+                    } else if (msg.role === 'assistant') {
+                        addMessageToChat('assistant', msg.content);
+                    }
+                });
+            }
+        } else {
+            addMessageToChat('error', data.message || 'An error occurred');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        addMessageToChat('error', 'Failed to get response');
+    })
+    .finally(() => {
+        input.disabled = false;
+        sendButton.disabled = false;
+        input.focus();
+    });
+}
+
+document.getElementById('user-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+</script>
+
+<style>
+.message {
+    word-wrap: break-word;
+}
+
+.user {
+    text-align: right;
+}
+
+.assistant {
+    text-align: left;
+}
+
+.error {
+    color: red;
+    text-align: center;
+}
+</style>
+{% endblock %}

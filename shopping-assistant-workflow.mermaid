@@ -1,0 +1,10 @@
+graph TD
+    Start((START)) --> Welcome[Welcome Message]
+    Welcome --> FetchUser[Fetch User Info]
+    FetchUser --> Assistant[Assistant]
+    Assistant --> Router{Route Tools}
+    Router -->|No Tools| End((END))
+    Router -->|Safe Tool| SafeTools[Safe Tools]
+    Router -->|Sensitive Tool| SensitiveTools[Sensitive Tools]
+    SafeTools --> Assistant
+    SensitiveTools --> Assistant
