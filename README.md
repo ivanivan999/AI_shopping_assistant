@@ -66,3 +66,9 @@ python run.py
 ### Order Tracking
 "Show my recent orders"
 "What's the status of order #1234?"
+
+## Jupyter Output
+look out details in aibot_gernerate.txt
+
+## Additional
+In case the chatbox doesn't work, please check aibot.ipynb it's the same core, and also the output aibot_generate.txt from it.
